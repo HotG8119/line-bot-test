@@ -39,18 +39,14 @@ async function handleEvent(event) {
     }
 
     const completion = await openai.chat.completions.create({
+        messages: [{ role: "system", content: "You are a helpful assistant." }],
         model: "gpt-3.5-turbo",
-        messages: [{
-            role: 'user',
-            content: event.message.text,
-        }],
-        max_tokens: 200,
     });
-    console.log(completion);
-  // create a echoing text message
-    const echo = { type: 'text', text: choices.message.content.trim() || '抱歉，我沒有話可說了。' };
+    console.log(completion.choices[0])
+    // create a echoing text message
+    const echo = { type: 'text', text: completion.choices[0].message.content.trim() || '抱歉，我沒有話可說了。' };
 
-  // use reply API
+    // use reply API
     return client.replyMessage(event.replyToken, echo);
 }
 
