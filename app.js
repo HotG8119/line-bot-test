@@ -2,19 +2,15 @@ require('dotenv').config();
 
 const line = require('@line/bot-sdk');
 const express = require('express');
-const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require("openai");
+
+const openai = new OpenAI();
 
 // create LINE SDK config from env variables
 const config = {
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.CHANNEL_SECRET,
+    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.CHANNEL_SECRET,
 };
-
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
-
 
 // create LINE SDK client
 const client = new line.Client(config);
@@ -26,37 +22,40 @@ const app = express();
 // register a webhook handler with middleware
 // about the middleware, please refer to doc
 app.post('/callback', line.middleware(config), (req, res) => {
-  Promise
+    Promise
     .all(req.body.events.map(handleEvent))
     .then((result) => res.json(result))
     .catch((err) => {
-      console.error(err);
-      res.status(500).end();
+        console.error(err);
+        res.status(500).end();
     });
 });
 
 // event handler
 async function handleEvent(event) {
-  if (event.type !== 'message' || event.message.type !== 'text') {
-    // ignore non-text-message event
-    return Promise.resolve(null);
-  }
-  
-    const completion = await openai.createCompletion({
-        model: "text-davinci-002",
-        prompt: "Hello world",
-        maxTokens: 100,
+    if (event.type !== 'message' || event.message.type !== 'text') {
+        // ignore non-text-message event
+        return Promise.resolve(null);
+    }
+
+    const completion = await openai.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: [{
+            role: 'user',
+            content: event.message.text,
+        }],
+        max_tokens: 200,
     });
-    console.log(completion.data)
+    console.log(completion);
   // create a echoing text message
-  const echo = { type: 'text', text: completion.data.choices[0].text };
+    const echo = { type: 'text', text: choices.message.content.trim() || '抱歉，我沒有話可說了。' };
 
   // use reply API
-  return client.replyMessage(event.replyToken, echo);
+    return client.replyMessage(event.replyToken, echo);
 }
 
 // listen on port
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`listening on ${port}`);
+    console.log(`listening on ${port}`);
 });
