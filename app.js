@@ -35,6 +35,17 @@ app.post('/callback', line.middleware(config), (req, res) => {
     });
 });
 
+async function main() {
+  const completion = await openai.chat.completions.create({
+    messages: [{ role: "system", content: "你知道我是誰嗎?" }],
+    model: "gpt-3.5-turbo",
+  });
+
+  console.log(completion.choices[0].message.content.trim() || '抱歉，我沒有話可說了。');
+}
+
+main();
+
 // event handler
 async function handleEvent(event) {
     if (event.type !== 'message' || event.message.type !== 'text') {
@@ -42,14 +53,13 @@ async function handleEvent(event) {
         return Promise.resolve(null);
     }
 
-    // const completion = await openai.chat.completions.create({
-    //     messages: [{ role: "system", content: "You are a helpful assistant." }],
-    //     model: "gpt-3.5-turbo",
-    // });
-    // console.log(completion.choices[0])
+    const completion = await openai.chat.completions.create({
+        messages: [{ role: 'user', content: `${event.message.text}` }],
+        model: "gpt-3.5-turbo",
+    });
+
     // create a echoing text message
-    // const echo = { type: 'text', text: completion.choices[0].message.content.trim() || '抱歉，我沒有話可說了。' };
-    const echo = { type: 'text', text: event.message.text };
+    const echo = { type: 'text', text: completion.choices[0].message.content.trim() || '抱歉，我沒有話可說了。' };
     // use reply API
     return client.replyMessage({
         replyToken: event.replyToken,
