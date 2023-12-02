@@ -4,16 +4,20 @@ const line = require('@line/bot-sdk');
 const express = require('express');
 const { OpenAI } = require("openai");
 
-const openai = new OpenAI();
-
-// create LINE SDK config from env variables
+const port = process.env.PORT || 3000;
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
     channelSecret: process.env.CHANNEL_SECRET,
 };
 
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    }
+);
 // create LINE SDK client
-const client = new line.Client(config);
+const client = new line.messagingApi.MessagingApiClient({
+    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
+});
 
 // create Express app
 // about Express itself: https://expressjs.com/
@@ -38,20 +42,22 @@ async function handleEvent(event) {
         return Promise.resolve(null);
     }
 
-    const completion = await openai.chat.completions.create({
-        messages: [{ role: "system", content: "You are a helpful assistant." }],
-        model: "gpt-3.5-turbo",
-    });
-    console.log(completion.choices[0])
+    // const completion = await openai.chat.completions.create({
+    //     messages: [{ role: "system", content: "You are a helpful assistant." }],
+    //     model: "gpt-3.5-turbo",
+    // });
+    // console.log(completion.choices[0])
     // create a echoing text message
-    const echo = { type: 'text', text: completion.choices[0].message.content.trim() || '抱歉，我沒有話可說了。' };
-
+    // const echo = { type: 'text', text: completion.choices[0].message.content.trim() || '抱歉，我沒有話可說了。' };
+    const echo = { type: 'text', text: event.message.text };
     // use reply API
-    return client.replyMessage(event.replyToken, echo);
+    return client.replyMessage({
+        replyToken: event.replyToken,
+        messages: [echo],
+    });
 }
 
 // listen on port
-const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`listening on ${port}`);
 });
