@@ -44,7 +44,7 @@ async function handleEvent(event) {
 
     const completion = await openai.chat.completions.create({
         messages: [{ role: 'user', content: `${event.message.text}` }],
-        model: "gpt-3.5-turbo",
+        model: "gpt-4-1106-preview",
     });
 
     // create a echoing text message
